@@ -96,6 +96,16 @@ plt.show()
 
 # <codecell>
 
+''' starting from one infected '''
+# setting parameter
+timeUnit = 'day'
+if timeUnit == 'day':
+    day = 1
+    year = 365 
+elif timeUnit == 'year':
+    year = 1
+    day = float(1)/365 
+    
 # one random number per event
 total_event = 300
 rate0 = 1.0/10
@@ -142,7 +152,7 @@ plot1.plot(Susceptible(total_event, rate0)[0], Susceptible(total_event, rate0)[1
 
 plot1.grid(True)
 plt.title(r'$ (events = {:}, \ rate = {:1.3f}) $'.format(total_event, rate0), fontsize = AlvaFontSize)
-plt.xlabel(r'$ time \ (day)$', fontsize = AlvaFontSize)
+plt.xlabel(r'$ time \ ({:})$'.format(timeUnit), fontsize = AlvaFontSize)
 plt.ylabel(r'$ Population \ of \ Susceptible $', fontsize = AlvaFontSize)
 plt.legend(loc = (0, -0.3))
 plt.xticks(fontsize = AlvaFontSize*0.6)
@@ -155,7 +165,7 @@ plot2.plot(Suscept(total_event, rate0)[0], Suscept(total_event, rate0)[1], label
 
 plot2.grid(True)
 plt.title(r'$ (events = {:}, \ rate = {:1.3f}) $'.format(total_event, rate0), fontsize = AlvaFontSize)
-plt.xlabel(r'$ time \ (day) $', fontsize = AlvaFontSize)
+plt.xlabel(r'$ time \ ({:})$'.format(timeUnit), fontsize = AlvaFontSize)
 plt.ylabel(r'$ Population \ of \ Susceptible $', fontsize = AlvaFontSize)
 plt.legend(loc = (0, -0.3))
 plt.xticks(fontsize = AlvaFontSize*0.6)
@@ -197,7 +207,7 @@ def Infected(total_event, rate0, rate1):
     return (gT, gI)
         
 # plotting
-figure_name = 'eventSIR'
+figure_name = '-eventSIR'
 file_suffix = '.png'
 save_figure = os.path.join(dir_path, file_name + figure_name + file_suffix)
 
