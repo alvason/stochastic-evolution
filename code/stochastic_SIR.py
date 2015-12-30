@@ -6,7 +6,7 @@
 # 
 # ### Evolutionary insights provided by stochastic tools
 
-# In[3]:
+# In[1]:
 
 '''
 author: Alvason Zhenhua Li
@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 import time
 import os
 dir_path = '/Users/al/Desktop/GitHub/stochastic-evolution/figure'
-file_name = 'gillespie-evolution'
+file_name = 'stochastic-evolution'
 
 import alva_machinery_probability as alva
 
@@ -37,7 +37,7 @@ plt.text(0, 0.0/3, r'$ \frac{\partial R(t)}{\partial t} =          +\gamma I(t) 
 plt.show()
 
 
-# In[7]:
+# In[2]:
 
 ''' starting from one infected '''
 # setting parameter
