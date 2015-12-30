@@ -198,7 +198,7 @@ plt.text(maxT, total_SIR*3.0/6, r'$ \mu = %f $'%(inOutRate), fontsize = AlvaFont
 plt.xticks(fontsize = AlvaFontSize*0.7)
 plt.yticks(fontsize = AlvaFontSize*0.7) 
 figure.tight_layout()
-plt.savefig(save_figure, dpi = 100)
+plt.savefig(save_figure, dpi = 100, bbox_inches='tight')
 plt.show()
 
 
