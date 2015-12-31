@@ -1,12 +1,12 @@
 
 # coding: utf-8
 
-# # Stochastic evolution
-# https://github.com/alvason/stochastic-evolution
+# # Stochastic infectious pulse
+# https://github.com/alvason/stochastic-infectious-pulse
 # 
-# ### Evolutionary insights provided by stochastic tools
+# ### Stochastic version for evolutionary insights
 
-# In[3]:
+# In[1]:
 
 '''
 author: Alvason Zhenhua Li
@@ -18,8 +18,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 import os
-dir_path = '/Users/al/Desktop/GitHub/stochastic-evolution/figure'
-file_name = 'stochastic-evolution'
+dir_path = '/Users/al/Desktop/GitHub/stochastic-infectious-pulse/figure'
+file_name = 'stochastic-infectious-pulse'
 
 import alva_machinery_probability as alva
 
@@ -37,7 +37,7 @@ plt.text(0, 0.0/3, r'$ \frac{\partial R(t)}{\partial t} =          +\gamma I(t) 
 plt.show()
 
 
-# In[3]:
+# In[2]:
 
 ''' starting from one infected '''
 # setting parameter
@@ -49,7 +49,7 @@ elif timeUnit == 'year':
     year = 1
     day = float(1)/365 
     
-total_SIR = 10**6
+total_SIR = 10**3
 initial_I = 1
 initial_S = total_SIR - initial_I
 initial_R = total_SIR - initial_S - initial_I
@@ -61,7 +61,7 @@ infecRate = reprodNum*(recovRate + inOutRate)/1 # per year, per person, per tota
 
 # initial boundary condition
 minT = float(0*day)
-maxT = float(90*day)
+maxT = float(60*day)
 
 # stochastic evolution way
 total_way = int(3)
@@ -171,7 +171,7 @@ for i in range(total_way):
     gRR[i] = gR 
 
 # plotting
-figure_name = '-SIR'
+figure_name = '-sir'
 file_suffix = '.png'
 save_figure = os.path.join(dir_path, file_name + figure_name + file_suffix)
 

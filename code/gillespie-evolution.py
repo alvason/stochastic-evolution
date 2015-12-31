@@ -1,10 +1,10 @@
 
 # coding: utf-8
 
-# # Stochastic evolution
-# https://github.com/alvason/stochastic-evolution
+# # Stochastic infectious pulse
+# https://github.com/alvason/stochastic-infectious-pulse
 # 
-# ### Evolutionary insights provided by stochastic tools
+# ### Stochastic version for evolutionary insights
 
 # In[7]:
 
@@ -18,7 +18,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 import os
-dir_path = '/Users/al/Desktop/GitHub/stochastic-evolution/figure'
+dir_path = '/Users/al/Desktop/GitHub/stochastic-infectious-pulse/figure'
 file_name = 'gillespie-evolution'
 
 import alva_machinery_probability as alva
