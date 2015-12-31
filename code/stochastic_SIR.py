@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 import time
 import os
 dir_path = '/Users/al/Desktop/GitHub/stochastic-infectious-pulse/figure'
-file_name = 'stochastic-infectious-pulse'
+file_name = 'stochastic-sir'
 
 import alva_machinery_probability as alva
 
