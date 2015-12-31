@@ -6,7 +6,7 @@
 # 
 # ### Evolutionary insights provided by stochastic tools
 
-# In[1]:
+# In[3]:
 
 '''
 author: Alvason Zhenhua Li
@@ -37,7 +37,7 @@ plt.text(0, 0.0/3, r'$ \frac{\partial R(t)}{\partial t} =          +\gamma I(t) 
 plt.show()
 
 
-# In[2]:
+# In[3]:
 
 ''' starting from one infected '''
 # setting parameter
@@ -49,7 +49,7 @@ elif timeUnit == 'year':
     year = 1
     day = float(1)/365 
     
-total_SIR = 1000
+total_SIR = 10**6
 initial_I = 1
 initial_S = total_SIR - initial_I
 initial_R = total_SIR - initial_S - initial_I
@@ -61,7 +61,7 @@ infecRate = reprodNum*(recovRate + inOutRate)/1 # per year, per person, per tota
 
 # initial boundary condition
 minT = float(0*day)
-maxT = float(60*day)
+maxT = float(90*day)
 
 # stochastic evolution way
 total_way = int(3)
