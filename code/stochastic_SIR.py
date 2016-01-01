@@ -6,7 +6,7 @@
 # 
 # ### Stochastic version for evolutionary insights
 
-# In[1]:
+# In[13]:
 
 '''
 author: Alvason Zhenhua Li
@@ -27,17 +27,48 @@ AlvaFontSize = 23
 AlvaFigSize = (16, 8)
 numberingFig = 0
 
+# based on deterministic SIR equation
+text_list = [r'$ Deterministic---Susceptible-Infectious-Recovered \ equation $'
+             , r'$ \frac{\partial S(t)}{\partial t} = \
+                 -\beta S(t)I(t) +\mu N -\mu S(t) $'
+             , r'$ \frac{\partial I(t)}{\partial t} = \
+                 +\beta S(t)I(t) - \gamma I(t) -\mu I(t) $'
+             , r'$ \frac{\partial R(t)}{\partial t} = \
+                 +\gamma I(t) - \mu R(t) $']
+total_list = np.size(text_list)
 numberingFig = numberingFig + 1
-plt.figure(numberingFig, figsize=(12, 3))
+plt.figure(numberingFig, figsize=(total_list*2, total_list))
 plt.axis('off')
-plt.title(r'$ Deterministic Susceptible-Infectious-Recovered \ equation $', fontsize = AlvaFontSize)
-plt.text(0, 2.0/3, r'$ \frac{\partial S(t)}{\partial t} =          -\beta S(t)I(t) +\mu N -\mu S(t)$', fontsize = 1.2*AlvaFontSize)
-plt.text(0, 1.0/3, r'$ \frac{\partial I(t)}{\partial t} =          +\beta S(t)I(t) - \gamma I(t) -\mu I(t) $', fontsize = 1.2*AlvaFontSize)
-plt.text(0, 0.0/3, r'$ \frac{\partial R(t)}{\partial t} =          +\gamma I(t) - \mu R(t) $', fontsize = 1.2*AlvaFontSize)
+for i in range(total_list):
+    plt.text(0, (total_list - float(i))/total_list
+             , text_list[i].replace('\\\n','')
+             , fontsize = 1.2*AlvaFontSize)
+plt.show()
+
+# algorithm for stochastic evolution
+figure_name = '-stochastic-event'
+file_suffix = '.png'
+save_figure = os.path.join(dir_path, file_name + figure_name + file_suffix)
+text_list = [r'$ Stochastic-evolution $'
+              , r'$ 1. event(\ new \ SIR \ in)  = \mu(S+I+R) $'
+              , r'$ 2. event(\ old \ S \ out) = \mu S $'
+              , r'$ 3. event(\ old \ I \ out) = \mu I $'
+              , r'$ 4. event(\ old \ R \ out) = \mu R $'
+              , r'$ 5. event(SI \ infected) = \beta S(t)I(t) $' 
+              , r'$ 6. event(IR \ recovred) = \gamma I(t) $']
+total_list = np.size(text_list)
+numberingFig = numberingFig + 1
+plt.figure(numberingFig, figsize=(total_list*2, total_list))
+plt.axis('off')
+for i in range(total_list):
+    plt.text(0, (total_list - float(i))/total_list
+             , text_list[i].replace('\\\n','')
+             , fontsize = 1.2*AlvaFontSize)
+plt.savefig(save_figure, dpi = 100)
 plt.show()
 
 
-# In[2]:
+# In[14]:
 
 ''' starting from one infected '''
 # setting parameter
@@ -49,7 +80,7 @@ elif timeUnit == 'year':
     year = 1
     day = float(1)/365 
     
-total_SIR = 10**3
+total_SIR = 300
 initial_I = 1
 initial_S = total_SIR - initial_I
 initial_R = total_SIR - initial_S - initial_I
@@ -61,10 +92,10 @@ infecRate = reprodNum*(recovRate + inOutRate)/1 # per year, per person, per tota
 
 # initial boundary condition
 minT = float(0*day)
-maxT = float(60*day)
+maxT = float(120*day)
 
 # stochastic evolution way
-total_way = int(3)
+total_way = int(5)
 total_step = int(maxT*total_SIR)
 gTT = np.zeros([total_way, total_step]) 
 gSS = np.zeros([total_way, total_step]) 
@@ -87,72 +118,73 @@ for i in range(total_way):
     gII[i, j] = gI[j]
     gRR[i, j] = gR[j] 
     # all possible events
-    event_SI = infecRate*gS[j]*gI[j]/(gS[j] + gI[j] + gR[j])
     event_SIRin = inOutRate*(gS[j] + gI[j] + gR[j])
     event_Sout = inOutRate*gS[j]
-    event_IR = recovRate*gI[j]
     event_Iout = inOutRate*gI[j]
     event_Rout = inOutRate*gR[j]
+    event_SI = infecRate*gS[j]*gI[j]/(gS[j] + gI[j] + gR[j])
+    event_IR = recovRate*gI[j]
     ###
     while (gT[j] < maxT):
-        event_all = event_SI + event_SIRin + event_Sout + event_IR + event_Iout + event_Rout          
+        event_all = event_SIRin + event_Sout + event_Iout + event_Rout + event_SI + event_IR         
         dt = -np.log(np.random.random())/event_all 
-        # SI infect-event
-        if np.random.random() < (event_SI/event_all):                      
-            gS[j] = gS[j] - 1
-            gI[j] = gI[j] + 1
-            event_SI = infecRate*gS[j]*gI[j]/(gS[j] + gI[j] + gR[j])
-            event_SIRin = inOutRate*(gS[j] + gI[j] + gR[j])
-            event_Sout = inOutRate*gS[j]
-            event_IR = recovRate*gI[j]
-            event_Iout = inOutRate*gI[j]
-            event_Rout = inOutRate*gR[j]
         # SIR in-event
-        elif np.random.random() < ((event_SI + event_SIRin)/event_all):                      
-            gS[j] = gS[j] + 1 
-            event_SI = infecRate*gS[j]*gI[j]/(gS[j] + gI[j] + gR[j])
+        if np.random.random() < (event_SIRin/event_all):                      
+            gS[j] = gS[j] + 1
             event_SIRin = inOutRate*(gS[j] + gI[j] + gR[j])
             event_Sout = inOutRate*gS[j]
-            event_IR = recovRate*gI[j]
             event_Iout = inOutRate*gI[j]
             event_Rout = inOutRate*gR[j]
-        # S out-event    
-        elif np.random.random() < ((event_SI + event_SIRin + event_Sout)/event_all):   
+            event_SI = infecRate*gS[j]*gI[j]/(gS[j] + gI[j] + gR[j])
+            event_IR = recovRate*gI[j]
+        # S out-event
+        elif np.random.random() < ((event_SIRin + event_Sout)/event_all):                      
             gS[j] = gS[j] - 1 
-            event_SI = infecRate*gS[j]*gI[j]/(gS[j] + gI[j] + gR[j])
             event_SIRin = inOutRate*(gS[j] + gI[j] + gR[j])
             event_Sout = inOutRate*gS[j]
-            event_IR = recovRate*gI[j]
             event_Iout = inOutRate*gI[j]
             event_Rout = inOutRate*gR[j]
-        # R recovered-event
-        elif np.random.random() < ((event_SI + event_SIRin + event_Sout + event_IR)/event_all):    
-            gI[j] = gI[j] - 1
+            event_SI = infecRate*gS[j]*gI[j]/(gS[j] + gI[j] + gR[j])
+            event_IR = recovRate*gI[j]
+        # I out-event    
+        elif np.random.random() < ((event_SIRin + event_Sout + event_Iout)/event_all):   
+            gI[j] = gI[j] - 1 
+            event_SIRin = inOutRate*(gS[j] + gI[j] + gR[j])
+            event_Sout = inOutRate*gS[j]
+            event_Iout = inOutRate*gI[j]
+            event_Rout = inOutRate*gR[j]
+            event_SI = infecRate*gS[j]*gI[j]/(gS[j] + gI[j] + gR[j])
+            event_IR = recovRate*gI[j]
+        # R out-event    
+        elif np.random.random() < ((event_SIRin + event_Sout + event_Iout + event_Rout)/event_all):   
+            gR[j] = gR[j] - 1 
+            event_SIRin = inOutRate*(gS[j] + gI[j] + gR[j])
+            event_Sout = inOutRate*gS[j]
+            event_Iout = inOutRate*gI[j]
+            event_Rout = inOutRate*gR[j]
+            event_SI = infecRate*gS[j]*gI[j]/(gS[j] + gI[j] + gR[j])
+            event_IR = recovRate*gI[j]
+        # SI infected-event    
+        elif np.random.random() < ((event_SIRin + event_Sout + event_Iout + event_Rout + event_SI)/event_all):   
+            gS[j] = gS[j] - 1 
+            gI[j] = gI[j] + 1
+            event_SIRin = inOutRate*(gS[j] + gI[j] + gR[j])
+            event_Sout = inOutRate*gS[j]
+            event_Iout = inOutRate*gI[j]
+            event_Rout = inOutRate*gR[j]
+            event_SI = infecRate*gS[j]*gI[j]/(gS[j] + gI[j] + gR[j])
+            event_IR = recovRate*gI[j]
+        # IR recovered-event    
+        else:  
+            gI[j] = gI[j] - 1 
             gR[j] = gR[j] + 1
-            event_SI = infecRate*gS[j]*gI[j]/(gS[j] + gI[j] + gR[j])
             event_SIRin = inOutRate*(gS[j] + gI[j] + gR[j])
             event_Sout = inOutRate*gS[j]
-            event_IR = recovRate*gI[j]
             event_Iout = inOutRate*gI[j]
             event_Rout = inOutRate*gR[j]
-        # I out-event
-        elif np.random.random() < ((event_SI + event_SIRin + event_Sout + event_IR + event_Iout)/event_all):    
-            gI[j] = gI[j] - 1
             event_SI = infecRate*gS[j]*gI[j]/(gS[j] + gI[j] + gR[j])
-            event_SIRin = inOutRate*(gS[j] + gI[j] + gR[j])
-            event_Sout = inOutRate*gS[j]
             event_IR = recovRate*gI[j]
-            event_Iout = inOutRate*gI[j]
-            event_Rout = inOutRate*gR[j]
-        # R out event
-        else: 
-            gR[j] = gR[j] - 1
-            event_SI = infecRate*gS[j]*gI[j]/(gS[j] + gI[j] + gR[j])
-            event_SIRin = inOutRate*(gS[j] + gI[j] + gR[j])
-            event_Sout = inOutRate*gS[j]
-            event_IR = recovRate*gI[j]
-            event_Iout = inOutRate*gI[j]
-            event_Rout = inOutRate*gR[j]
+            
         # next step is based on current step
         j = j + 1
         gT[j] = gT[j - 1] + dt 
