@@ -76,17 +76,19 @@ file_suffix = '.png'
 save_figure = os.path.join(dir_path, file_name + figure_name + file_suffix)
 text_list = [r'$ Gillespie-algorithm: $'
              , r'$ 1. \ initialize \ the \ number \ of \ each \ group: \ S(t=0), I(t=0), R(t=0) $'
-             , r'$ 2. \ compute \ the \ probability \ of \ each \ event_i $'
-             , r'$ 3. \ compute \ \Delta t = \frac{-log_{e}(event_n)}{\sum_{i}^{} event_i} $'
-             , r'$ \ (according \ to \ probability-density-function: \ Pr(t < event_n < t+\Delta t) = \
+             , r'$ 2. \ compute \ the \ probability \ of \ each \ possible \ event_i \ at \ the \ moment \ \bf{t} $'
+             , r'$ 3. \ randomly \ select \ event_{next} \
+                   \ according \ to \ random{[0,1)} < \frac{\sum_{k=1}^{next}event_{k}}{\sum_{i=1}^{all} event_i} $'
+             , r'$ 4. \ update \ the \ number \ of \ corresponding \ group $'
+             , r'$ 5. \ compute \ \Delta t = \frac{-log_{e}(event_{next})}{\sum_{i}^{} event_i} $'
+             , r'$ \ (according \ to \ probability-density-function: \ Pr(t < event_{next} < t+\Delta t) = \
                    exp(-\Delta t \sum_{i}^{} event_i )) $'
-             , r'$ 4. \ choose \ event_n \ by \ random{[0,1)} > \frac{event_n}{\sum_{i}^{} event_i} $'
-             , r'$ \ (update \ the \ number \ of \ corresponding \ group) $'
-             , r'$ 5. \ go \ to \ step-2 $'
+             , r'$ 7. \ update \ t = t + \Delta t $'
+             , r'$ 6. \ go \ to \ step-2 $'
             ]
 total_list = np.size(text_list)
 numberingFig = numberingFig + 1
-plt.figure(numberingFig, figsize=(total_list*2, total_list))
+plt.figure(numberingFig, figsize=(total_list, total_list*1.5))
 plt.axis('off')
 for i in range(total_list):
     plt.text(0, (total_list - float(i))/total_list
@@ -96,7 +98,84 @@ plt.savefig(save_figure, dpi = 100)
 plt.show()
 
 
-# In[6]:
+# In[3]:
+
+''' define stochasticSIR function '''
+def stochasticSIR(total_step, minT, maxT, initial_S, initial_I, initial_R
+                  , reprodNum, recovRate, inOutRate, infecRate):
+    # intialized
+    gT = np.zeros([total_step]) 
+    gS = np.zeros([total_step]) 
+    gI = np.zeros([total_step]) 
+    gR = np.zeros([total_step]) 
+    j = int(0)
+    gT[j] = minT
+    gS[j] = initial_S
+    gI[j] = initial_I
+    gR[j] = initial_R  
+    # all possible events
+    event_SIRin = inOutRate*(gS[j] + gI[j] + gR[j])
+    event_Sout = inOutRate*gS[j]
+    event_Iout = inOutRate*gI[j]
+    event_Rout = inOutRate*gR[j]
+    event_SI = infecRate*gS[j]*gI[j]/(gS[j] + gI[j] + gR[j])
+    event_IR = recovRate*gI[j]
+    # configuration table
+    eventRate_updateSIR = np.array([[event_SIRin, +1, 0, 0]
+                               , [event_Sout, -1, 0, 0]
+                               , [event_Iout, 0, -1, 0]
+                               , [event_Rout, 0, 0, -1]
+                               , [event_SI, -1, +1, 0]
+                               , [event_IR, 0, -1, +1]])
+    ###
+    while (gT[j] < maxT):       
+        # randomly choose event
+        if np.random.random() < (eventRate_updateSIR[0:0 + 1, 0].sum()/eventRate_updateSIR[:, 0].sum()):
+            k = 0
+        elif np.random.random() < (eventRate_updateSIR[0:1 + 1, 0].sum()/eventRate_updateSIR[:, 0].sum()):
+            k = 1
+        elif np.random.random() < (eventRate_updateSIR[0:2 + 1, 0].sum()/eventRate_updateSIR[:, 0].sum()):
+            k = 2
+        elif np.random.random() < (eventRate_updateSIR[0:3 + 1, 0].sum()/eventRate_updateSIR[:, 0].sum()):
+            k = 3
+        elif np.random.random() < (eventRate_updateSIR[0:4 + 1, 0].sum()/eventRate_updateSIR[:, 0].sum()):
+            k = 4
+        else:
+            k = 5
+        # update number of section
+        gS[j] = gS[j] + eventRate_updateSIR[k, 1]
+        gI[j] = gI[j] + eventRate_updateSIR[k, 2]
+        gR[j] = gR[j] + eventRate_updateSIR[k, 3]
+        # update event_rate
+        event_SIRin = inOutRate*(gS[j] + gI[j] + gR[j])
+        event_Sout = inOutRate*gS[j]
+        event_Iout = inOutRate*gI[j]
+        event_Rout = inOutRate*gR[j]
+        event_SI = infecRate*gS[j]*gI[j]/(gS[j] + gI[j] + gR[j])
+        event_IR = recovRate*gI[j]
+        eventRate_updateSIR = np.array([[event_SIRin, 1, 0, 0]
+                                      , [event_Sout, -1, 0, 0]
+                                      , [event_Iout, 0, -1, 0]
+                                      , [event_Rout, 0, 0, -1]
+                                      , [event_SI, -1, +1, 0]
+                                      , [event_IR, 0, -1, +1]])  
+        # next step is based on current step
+        dt = -np.log(np.random.random()) / eventRate_updateSIR[:, 0].sum()
+        gT[j + 1] = gT[j] + dt 
+        gS[j + 1] = gS[j]
+        gI[j + 1] = gI[j]
+        gR[j + 1] = gR[j]
+        j = j + 1
+    # set the value of remaining steps = value of the last step (for ending)
+    gT[j:] = gT[j]
+    gS[j:] = gS[j]
+    gI[j:] = gI[j]
+    gR[j:] = gR[j]
+    ###
+    return(gT, gS, gI, gR)
+
+
+# In[9]:
 
 ''' starting from one infected '''
 # setting parameter
@@ -112,7 +191,7 @@ total_SIR = 300
 initial_I = 1
 initial_S = total_SIR - initial_I
 initial_R = total_SIR - initial_S - initial_I
-
+# set parameter
 reprodNum = float(1.5) # basic reproductive number R0: one infected person will transmit to 1.8 person 
 recovRate = float(1)/(4*day) # 4 days per period ==> rate/year = 365/4
 inOutRate = float(1)/(30*year) # birth rate per year
@@ -120,115 +199,23 @@ infecRate = reprodNum*(recovRate + inOutRate)/1 # per year, per person, per tota
 
 # initial boundary condition
 minT = float(0*day)
-maxT = float(60*day)
+maxT = float(90*day)
 
-# stochastic evolution way
-total_way = int(3)
 total_step = int(maxT*total_SIR)
+# stochastic evolution way
+total_way = int(5)
 gTT = np.zeros([total_way, total_step]) 
 gSS = np.zeros([total_way, total_step]) 
 gII = np.zeros([total_way, total_step]) 
 gRR = np.zeros([total_way, total_step]) 
-gT = np.zeros([total_step]) 
-gS = np.zeros([total_step]) 
-gI = np.zeros([total_step]) 
-gR = np.zeros([total_step]) 
-for i in range(total_way):   
-    j = int(0)
-    # intialized
-    gT[j] = minT
-    gS[j] = initial_S
-    gI[j] = initial_I
-    gR[j] = initial_R 
-    # storing
-    gTT[i, j] = gT[j]
-    gSS[i, j] = gS[j]
-    gII[i, j] = gI[j]
-    gRR[i, j] = gR[j] 
-    # all possible events
-    event_SIRin = inOutRate*(gS[j] + gI[j] + gR[j])
-    event_Sout = inOutRate*gS[j]
-    event_Iout = inOutRate*gI[j]
-    event_Rout = inOutRate*gR[j]
-    event_SI = infecRate*gS[j]*gI[j]/(gS[j] + gI[j] + gR[j])
-    event_IR = recovRate*gI[j]
-    ###
-    while (gT[j] < maxT):
-        event_all = event_SIRin + event_Sout + event_Iout + event_Rout + event_SI + event_IR         
-        dt = -np.log(np.random.random())/event_all 
-        # SIR in-event
-        if np.random.random() < (event_SIRin/event_all):                      
-            gS[j] = gS[j] + 1
-            event_SIRin = inOutRate*(gS[j] + gI[j] + gR[j])
-            event_Sout = inOutRate*gS[j]
-            event_Iout = inOutRate*gI[j]
-            event_Rout = inOutRate*gR[j]
-            event_SI = infecRate*gS[j]*gI[j]/(gS[j] + gI[j] + gR[j])
-            event_IR = recovRate*gI[j]
-        # S out-event
-        elif np.random.random() < ((event_SIRin + event_Sout)/event_all):                      
-            gS[j] = gS[j] - 1 
-            event_SIRin = inOutRate*(gS[j] + gI[j] + gR[j])
-            event_Sout = inOutRate*gS[j]
-            event_Iout = inOutRate*gI[j]
-            event_Rout = inOutRate*gR[j]
-            event_SI = infecRate*gS[j]*gI[j]/(gS[j] + gI[j] + gR[j])
-            event_IR = recovRate*gI[j]
-        # I out-event    
-        elif np.random.random() < ((event_SIRin + event_Sout + event_Iout)/event_all):   
-            gI[j] = gI[j] - 1 
-            event_SIRin = inOutRate*(gS[j] + gI[j] + gR[j])
-            event_Sout = inOutRate*gS[j]
-            event_Iout = inOutRate*gI[j]
-            event_Rout = inOutRate*gR[j]
-            event_SI = infecRate*gS[j]*gI[j]/(gS[j] + gI[j] + gR[j])
-            event_IR = recovRate*gI[j]
-        # R out-event    
-        elif np.random.random() < ((event_SIRin + event_Sout + event_Iout + event_Rout)/event_all):   
-            gR[j] = gR[j] - 1 
-            event_SIRin = inOutRate*(gS[j] + gI[j] + gR[j])
-            event_Sout = inOutRate*gS[j]
-            event_Iout = inOutRate*gI[j]
-            event_Rout = inOutRate*gR[j]
-            event_SI = infecRate*gS[j]*gI[j]/(gS[j] + gI[j] + gR[j])
-            event_IR = recovRate*gI[j]
-        # SI infected-event    
-        elif np.random.random() < ((event_SIRin + event_Sout + event_Iout + event_Rout + event_SI)/event_all):   
-            gS[j] = gS[j] - 1 
-            gI[j] = gI[j] + 1
-            event_SIRin = inOutRate*(gS[j] + gI[j] + gR[j])
-            event_Sout = inOutRate*gS[j]
-            event_Iout = inOutRate*gI[j]
-            event_Rout = inOutRate*gR[j]
-            event_SI = infecRate*gS[j]*gI[j]/(gS[j] + gI[j] + gR[j])
-            event_IR = recovRate*gI[j]
-        # IR recovered-event    
-        else:  
-            gI[j] = gI[j] - 1 
-            gR[j] = gR[j] + 1
-            event_SIRin = inOutRate*(gS[j] + gI[j] + gR[j])
-            event_Sout = inOutRate*gS[j]
-            event_Iout = inOutRate*gI[j]
-            event_Rout = inOutRate*gR[j]
-            event_SI = infecRate*gS[j]*gI[j]/(gS[j] + gI[j] + gR[j])
-            event_IR = recovRate*gI[j]
-            
-        # next step is based on current step
-        j = j + 1
-        gT[j] = gT[j - 1] + dt 
-        gS[j] = gS[j - 1]
-        gI[j] = gI[j - 1]
-        gR[j] = gR[j - 1]
-    # set the value of remaining steps = value of the last step (for ending)
-    gT[j:] = gT[j]
-    gS[j:] = gS[j]
-    gI[j:] = gI[j]
-    gR[j:] = gR[j]
-    # storing
-    gTT[i] = gT
-    gSS[i] = gS
-    gII[i] = gI
-    gRR[i] = gR 
+
+for i in range(total_way):
+    aaa = stochasticSIR(total_step, minT, maxT, initial_S, initial_I, initial_R
+                        , reprodNum, recovRate, inOutRate, infecRate)
+    gTT[i] = aaa[0]
+    gSS[i] = aaa[1]
+    gII[i] = aaa[2]
+    gRR[i] = aaa[3]
 
 # plotting
 figure_name = '-sir'
@@ -262,7 +249,108 @@ plt.savefig(save_figure, dpi = 100, bbox_inches='tight')
 plt.show()
 
 
-# In[ ]:
+# In[5]:
+
+if np.random.random() < 1.0/4:
+    print 'k = 1'
+elif np.random.random() < 2.0/4:
+    print 'k = 2'
+elif np.random.random() < 3.0/4:
+    print 'k = 3'
+else:
+    print 'k = 4'
+print 'end'
 
 
+# In[6]:
+
+'''uniform randomness --- uniform distribution'''
+total_event = int(100)
+gInput = np.arange(total_event)
+meanP = 0.5
+randomSeed = np.random.uniform(0, 1, total_event)
+
+sumP = 0
+for i in range(total_event):
+    sumP = sumP + (meanP - randomSeed[i])**2
+deviationP = (sumP/total_event)**(1.0/2)
+
+totalLevel = int(total_event/10)
+category = alva.AlvaLevel(randomSeed, totalLevel, False)
+gLevel = category[0]
+gLevel_int = gLevel.astype(int)
+numberLevel = category[1]
+#print ('level =', gLevel)
+#print ('level_int =', gLevel_int)
+
+# plotting
+figure_name = ''
+file_suffix = '.png'
+save_figure = os.path.join(dir_path, file_name + figure_name + file_suffix)
+
+numberingFig = numberingFig + 1
+figure = plt.figure(numberingFig, figsize = AlvaFigSize)
+plot1 = figure.add_subplot(1, 2, 1)
+plot1.plot(gInput, randomSeed, color = 'gray', marker = 'o', label = 'data')
+plot1.plot(gInput, alva.AlvaMinMax(randomSeed), color = 'red', marker = 'o', label = 'minMaxListing')
+if total_event < 100:
+    plot1.set_xticks(gInput, minor = True) 
+    plot1.set_yticks(randomSeed, minor = True)
+    plot1.grid(True, which = 'minor')
+else:
+    plot1.grid(True, which = 'major')
+plt.title(r'$ Exponential \ (mean = {:1.3f},\ deviation = {:1.3f}) $'.format(meanP, deviationP), fontsize = AlvaFontSize)
+plt.xlabel(r'$ event-input $', fontsize = AlvaFontSize)
+plt.ylabel(r'$ output $', fontsize = AlvaFontSize)
+plt.legend(loc = (0, -0.2))
+plt.xticks(fontsize = AlvaFontSize*0.6)
+plt.yticks(fontsize = AlvaFontSize*0.6) 
+
+plot2 = figure.add_subplot(1, 2, 2)
+plot2.plot(numberLevel, gLevel, color = 'red', marker = 'o', label = 'category')
+if totalLevel < 100:
+    plot2.set_xticks(numberLevel, minor = True) 
+    plot2.set_yticks(gLevel, minor = True)
+    plot2.grid(True, which = 'minor')
+else:
+    plot2.grid(True, which = 'major')
+plt.title(r'$ (events = {:},\ levels = {:}) $'.format(total_event, totalLevel)
+          , fontsize = AlvaFontSize)
+plt.xlabel(r'$ event/level $', fontsize = AlvaFontSize)
+plt.ylabel(r'$ level-range $', fontsize = AlvaFontSize)
+plt.legend(loc = (0, -0.2))
+plt.xticks(fontsize = AlvaFontSize*0.6)
+plt.yticks(fontsize = AlvaFontSize*0.6) 
+
+figure.tight_layout()
+plt.savefig(save_figure, dpi = 100)
+plt.show()
+
+
+# In[7]:
+
+randomSeed = np.random.uniform(0, 1, 100)
+
+event_all_rate = randomSeed[0:10]
+print event_all_rate
+event_all_PD = event_all_rate/event_all_rate.sum()
+
+dt = 0.01
+total_step = 10
+
+gT = np.arange(total_step)*dt
+event_n = np.zeros([total_step, event_all_rate.size])
+event_n[0] = event_all_PD
+
+for i in range(total_step):
+    for j in range(event_all_rate.size):
+        event_n[i, j] = np.exp(-dt * np.sum(event_all_rate))
+        event_all_rate[j] = event_n[i, j] 
+#    event_all_PD = event_all_PD/event_all_PD.sum()
+
+numberingFig = numberingFig + 1
+figure = plt.figure(numberingFig, figsize = AlvaFigSize)
+for j in range(event_all_rate.size):
+    plt.plot(gT, event_n[:, j], marker = 'o')
+plt.show()
 
