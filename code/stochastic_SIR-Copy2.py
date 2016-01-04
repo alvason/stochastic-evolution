@@ -189,22 +189,55 @@ plt.savefig(save_figure, dpi = 100)
 plt.show()
 
 
-# In[5]:
+# In[16]:
 
-''' define stochasticSIR function '''
+''' starting from one infected '''
+# setting parameter
+timeUnit = 'day'
+if timeUnit == 'day':
+    day = 1
+    year = 365 
+elif timeUnit == 'year':
+    year = 1
+    day = float(1)/365 
+    
+total_SIR = 300
+initial_I = 1
+initial_S = total_SIR - initial_I
+initial_R = total_SIR - initial_S - initial_I
 
-def stochasticSIR(total_step, minT, maxT, initial_S, initial_I, initial_R
-                  , reprodNum, recovRate, inOutRate, infecRate):
-    # intialized
-    gT = np.zeros([total_step]) 
-    gS = np.zeros([total_step]) 
-    gI = np.zeros([total_step]) 
-    gR = np.zeros([total_step]) 
+reprodNum = float(1.5) # basic reproductive number R0: one infected person will transmit to 1.8 person 
+recovRate = float(1)/(4*day) # 4 days per period ==> rate/year = 365/4
+inOutRate = float(1)/(30*year) # birth rate per year
+infecRate = reprodNum*(recovRate + inOutRate)/1 # per year, per person, per total-population
+
+# initial boundary condition
+minT = float(0*day)
+maxT = float(60*day)
+
+# stochastic evolution way
+total_way = int(3)
+total_step = int(maxT*total_SIR)
+gTT = np.zeros([total_way, total_step]) 
+gSS = np.zeros([total_way, total_step]) 
+gII = np.zeros([total_way, total_step]) 
+gRR = np.zeros([total_way, total_step]) 
+gT = np.zeros([total_step]) 
+gS = np.zeros([total_step]) 
+gI = np.zeros([total_step]) 
+gR = np.zeros([total_step]) 
+for i in range(total_way):   
     j = int(0)
+    # intialized
     gT[j] = minT
     gS[j] = initial_S
     gI[j] = initial_I
-    gR[j] = initial_R  
+    gR[j] = initial_R 
+    # storing
+    gTT[i, j] = gT[j]
+    gSS[i, j] = gS[j]
+    gII[i, j] = gI[j]
+    gRR[i, j] = gR[j] 
     # all possible events
     event_SIRin = inOutRate*(gS[j] + gI[j] + gR[j])
     event_Sout = inOutRate*gS[j]
@@ -212,13 +245,14 @@ def stochasticSIR(total_step, minT, maxT, initial_S, initial_I, initial_R
     event_Rout = inOutRate*gR[j]
     event_SI = infecRate*gS[j]*gI[j]/(gS[j] + gI[j] + gR[j])
     event_IR = recovRate*gI[j]
-    # configuration table
+    
     eventRate_updateSIR = np.array([[event_SIRin, +1, 0, 0]
                                , [event_Sout, -1, 0, 0]
                                , [event_Iout, 0, -1, 0]
                                , [event_Rout, 0, 0, -1]
                                , [event_SI, -1, +1, 0]
                                , [event_IR, 0, -1, +1]])
+
     ###
     while (gT[j] < maxT):       
         dt = -np.log(np.random.random()) / eventRate_updateSIR[:, 0].sum()
@@ -342,51 +376,13 @@ def stochasticSIR(total_step, minT, maxT, initial_S, initial_I, initial_R
     gS[j:] = gS[j]
     gI[j:] = gI[j]
     gR[j:] = gR[j]
-    ###
-    return(gT, gS, gI, gR)
+    # storing
+    gTT[i] = gT
+    gSS[i] = gS
+    gII[i] = gI
+    gRR[i] = gR 
 
-
-# In[9]:
-
-''' starting from one infected '''
-# setting parameter
-timeUnit = 'day'
-if timeUnit == 'day':
-    day = 1
-    year = 365 
-elif timeUnit == 'year':
-    year = 1
-    day = float(1)/365 
     
-total_SIR = 300
-initial_I = 1
-initial_S = total_SIR - initial_I
-initial_R = total_SIR - initial_S - initial_I
-# set parameter
-reprodNum = float(1.5) # basic reproductive number R0: one infected person will transmit to 1.8 person 
-recovRate = float(1)/(4*day) # 4 days per period ==> rate/year = 365/4
-inOutRate = float(1)/(30*year) # birth rate per year
-infecRate = reprodNum*(recovRate + inOutRate)/1 # per year, per person, per total-population
-
-# initial boundary condition
-minT = float(0*day)
-maxT = float(90*day)
-
-total_step = int(maxT*total_SIR)
-# stochastic evolution way
-total_way = int(6)
-gTT = np.zeros([total_way, total_step]) 
-gSS = np.zeros([total_way, total_step]) 
-gII = np.zeros([total_way, total_step]) 
-gRR = np.zeros([total_way, total_step]) 
-
-for i in range(total_way):
-    aaa = stochasticSIR(total_step, minT, maxT, initial_S, initial_I, initial_R
-                        , reprodNum, recovRate, inOutRate, infecRate)
-    gTT[i] = aaa[0]
-    gSS[i] = aaa[1]
-    gII[i] = aaa[2]
-    gRR[i] = aaa[3]
 
 # plotting
 figure_name = '-sir'
@@ -420,7 +416,57 @@ plt.savefig(save_figure, dpi = 100, bbox_inches='tight')
 plt.show()
 
 
-# In[ ]:
+# In[6]:
+
+for k in range(eventRate_updateSIR[:, 0].size - 1):
+    print eventRate_updateSIR[0:k + 1, 0]
 
 
+# In[7]:
+
+for k in range(eventRate_updateSIR[:, 0].size):
+    print k
+
+
+# In[8]:
+
+def aaa(gS, gI, gR, eventRate_updateSIR, k):
+    gS[j] = gS[j] + eventRate_updateSIR[k, 1]
+    gI[j] = gI[j] + eventRate_updateSIR[k, 2]
+    gR[j] = gR[j] + eventRate_updateSIR[k, 3]
+    # update event_rate
+    event_SIRin = inOutRate*(gS[j] + gI[j] + gR[j])
+    event_Sout = inOutRate*gS[j]
+    event_Iout = inOutRate*gI[j]
+    event_Rout = inOutRate*gR[j]
+    event_SI = infecRate*gS[j]*gI[j]/(gS[j] + gI[j] + gR[j])
+    event_IR = recovRate*gI[j]
+    eventRate_updateSIR = np.array([[event_SIRin, 1, 0, 0]
+                           , [event_Sout, -1, 0, 0]
+                           , [event_Iout, 0, -1, 0]
+                           , [event_Rout, 0, 0, -1]
+                           , [event_SI, -1, +1, 0]
+                           , [event_IR, 0, -1, +1]])     
+    return(gS, gI, gR, eventRate_updateSIR)
+
+
+# In[9]:
+
+k = k + 1
+gS[j] = gS[j] + eventRate_updateSIR[k, 1]
+gI[j] = gI[j] + eventRate_updateSIR[k, 2]
+gR[j] = gR[j] + eventRate_updateSIR[k, 3]
+# update event_rate
+event_SIRin = inOutRate*(gS[j] + gI[j] + gR[j])
+event_Sout = inOutRate*gS[j]
+event_Iout = inOutRate*gI[j]
+event_Rout = inOutRate*gR[j]
+event_SI = infecRate*gS[j]*gI[j]/(gS[j] + gI[j] + gR[j])
+event_IR = recovRate*gI[j]
+eventRate_updateSIR = np.array([[event_SIRin, 1, 0, 0]
+                   , [event_Sout, -1, 0, 0]
+                   , [event_Iout, 0, -1, 0]
+                   , [event_Rout, 0, 0, -1]
+                   , [event_SI, -1, +1, 0]
+                   , [event_IR, 0, -1, +1]])  
 
