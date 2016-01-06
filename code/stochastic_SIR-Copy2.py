@@ -118,49 +118,49 @@ def stochasticSIR(total_step, minT, maxT, initial_S, initial_I, initial_R
     event_Sout = inOutRate*gS[j]
     event_Iout = inOutRate*gI[j]
     event_Rout = inOutRate*gR[j]
-    event_SI = infecRate*gS[j]*gI[j] / (gS[j] + gI[j] + gR[j])
+    event_SI = infecRate*gS[j]*gI[j]/(gS[j] + gI[j] + gR[j])
     event_IR = recovRate*gI[j]
     # configuration table
-    eventRate_updateNumSIR = np.array([[event_SIRin, +1, 0, 0]
-                                     , [event_Sout, -1, 0, 0]
-                                     , [event_Iout, 0, -1, 0]
-                                     , [event_Rout, 0, 0, -1]
-                                     , [event_SI, -1, +1, 0]
-                                     , [event_IR, 0, -1, +1]])
+    eventRate_updateSIR = np.array([[event_SIRin, +1, 0, 0]
+                               , [event_Sout, -1, 0, 0]
+                               , [event_Iout, 0, -1, 0]
+                               , [event_Rout, 0, 0, -1]
+                               , [event_SI, -1, +1, 0]
+                               , [event_IR, 0, -1, +1]])
     ###
     while (gT[j] < maxT):       
         # randomly choose event
-        if np.random.random() < (eventRate_updateNumSIR[0:1, 0].sum() / eventRate_updateNumSIR[:, 0].sum()):
+        if np.random.random() < (eventRate_updateSIR[0:0 + 1, 0].sum()/eventRate_updateSIR[:, 0].sum()):
             k = 0
-        elif np.random.random() < (eventRate_updateNumSIR[0:2, 0].sum() / eventRate_updateNumSIR[:, 0].sum()):
+        elif np.random.random() < (eventRate_updateSIR[0:1 + 1, 0].sum()/eventRate_updateSIR[:, 0].sum()):
             k = 1
-        elif np.random.random() < (eventRate_updateNumSIR[0:3, 0].sum() / eventRate_updateNumSIR[:, 0].sum()):
+        elif np.random.random() < (eventRate_updateSIR[0:2 + 1, 0].sum()/eventRate_updateSIR[:, 0].sum()):
             k = 2
-        elif np.random.random() < (eventRate_updateNumSIR[0:4, 0].sum() / eventRate_updateNumSIR[:, 0].sum()):
+        elif np.random.random() < (eventRate_updateSIR[0:3 + 1, 0].sum()/eventRate_updateSIR[:, 0].sum()):
             k = 3
-        elif np.random.random() < (eventRate_updateNumSIR[0:5, 0].sum() / eventRate_updateNumSIR[:, 0].sum()):
+        elif np.random.random() < (eventRate_updateSIR[0:4 + 1, 0].sum()/eventRate_updateSIR[:, 0].sum()):
             k = 4
         else:
             k = 5
         # update number of section
-        gS[j] = gS[j] + eventRate_updateNumSIR[k, 1]
-        gI[j] = gI[j] + eventRate_updateNumSIR[k, 2]
-        gR[j] = gR[j] + eventRate_updateNumSIR[k, 3]
+        gS[j] = gS[j] + eventRate_updateSIR[k, 1]
+        gI[j] = gI[j] + eventRate_updateSIR[k, 2]
+        gR[j] = gR[j] + eventRate_updateSIR[k, 3]
         # update event_rate
         event_SIRin = inOutRate*(gS[j] + gI[j] + gR[j])
         event_Sout = inOutRate*gS[j]
         event_Iout = inOutRate*gI[j]
         event_Rout = inOutRate*gR[j]
-        event_SI = infecRate*gS[j]*gI[j] / (gS[j] + gI[j] + gR[j])
+        event_SI = infecRate*gS[j]*gI[j]/(gS[j] + gI[j] + gR[j])
         event_IR = recovRate*gI[j]
-        eventRate_updateNumSIR = np.array([[event_SIRin, 1, 0, 0]
-                                         , [event_Sout, -1, 0, 0]
-                                         , [event_Iout, 0, -1, 0]
-                                         , [event_Rout, 0, 0, -1]
-                                         , [event_SI, -1, +1, 0]
-                                         , [event_IR, 0, -1, +1]])  
+        eventRate_updateSIR = np.array([[event_SIRin, 1, 0, 0]
+                                      , [event_Sout, -1, 0, 0]
+                                      , [event_Iout, 0, -1, 0]
+                                      , [event_Rout, 0, 0, -1]
+                                      , [event_SI, -1, +1, 0]
+                                      , [event_IR, 0, -1, +1]])  
         # next step is based on current step
-        dt = -np.log(np.random.random()) / eventRate_updateNumSIR[:, 0].sum()
+        dt = -np.log(np.random.random()) / eventRate_updateSIR[:, 0].sum()
         gT[j + 1] = gT[j] + dt 
         gS[j + 1] = gS[j]
         gI[j + 1] = gI[j]
@@ -175,7 +175,7 @@ def stochasticSIR(total_step, minT, maxT, initial_S, initial_I, initial_R
     return(gT, gS, gI, gR)
 
 
-# In[4]:
+# In[5]:
 
 ''' starting from one infected '''
 # setting parameter
@@ -238,10 +238,10 @@ plt.title(r'$ Stochastic \ SIR \ (Susceptible-Infected-Recovered) $', fontsize =
 plt.xlabel(r'$ time \ ({:})$'.format(timeUnit), fontsize = AlvaFontSize)
 plt.ylabel(r'$ Population $', fontsize = AlvaFontSize)
 plt.legend(loc = (1,0))
-plt.text(maxT, total_SIR*6.0/6, r'$ R_0 = {:} $'.format(reprodNum), fontsize = AlvaFontSize)
-plt.text(maxT, total_SIR*5.0/6, r'$ \gamma = {:} $'.format(recovRate), fontsize = AlvaFontSize)
-plt.text(maxT, total_SIR*4.0/6, r'$ \beta = {:} $'.format(infecRate), fontsize = AlvaFontSize)
-plt.text(maxT, total_SIR*3.0/6, r'$ \mu = {:} $'.format(inOutRate), fontsize = AlvaFontSize)
+plt.text(maxT, total_SIR*6.0/6, r'$ R_0 = %f $'%(reprodNum), fontsize = AlvaFontSize)
+plt.text(maxT, total_SIR*5.0/6, r'$ \gamma = %f $'%(recovRate), fontsize = AlvaFontSize)
+plt.text(maxT, total_SIR*4.0/6, r'$ \beta = %f $'%(infecRate), fontsize = AlvaFontSize)
+plt.text(maxT, total_SIR*3.0/6, r'$ \mu = %f $'%(inOutRate), fontsize = AlvaFontSize)
 plt.xticks(fontsize = AlvaFontSize*0.7)
 plt.yticks(fontsize = AlvaFontSize*0.7) 
 figure.tight_layout()
