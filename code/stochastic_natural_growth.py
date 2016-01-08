@@ -6,7 +6,7 @@
 # 
 # ### Stochastic version for evolutionary insights
 
-# In[20]:
+# In[1]:
 
 '''
 author: Alvason Zhenhua Li
@@ -28,23 +28,30 @@ AlvaFigSize = (16, 8)
 numberingFig = 0
 
 
-# In[86]:
+# In[50]:
 
 # algorithm for stochastic evolution
 figure_name = '-stochastic-natural-growth'
 file_suffix = '.png'
 save_figure = os.path.join(dir_path, file_name + figure_name + file_suffix)
 text_list = [r'$ stochastic-natural-growth: $'
-             , r'$ 1. \ Pr(\delta t| G[t+\delta t]) = G[t_0] $'
-             , r'$ 2. \ Pr(\delta t + \Delta t| G[t+\delta t +\Delta t]) $'
-             , r'$ = \ Pr(\delta t| G[t+\delta t]) * Pr(\Delta t| G[t+\delta t +\Delta t]) $'
-             , r'$ = \ Pr(\delta t| G[t+\delta t]) * (1 - Pr(\delta t| G[t+\delta t +\delta t])) $'
-             , r'$ \Longrightarrow \frac{\partial}{\partial t}Pr(\delta t| G[t]) = -\mu*G[t_0]*Pr(\delta t| G[t]) $'
-             , r'$ \Longrightarrow Pr(\delta t| G[t]) = G[t_0]*e^{(-\mu*t)} $'
+             , r'$ 0. \ Starting \ at \ time = \ t_0, \ and \ cell \ number = \ G[t_0] $'
+             , r'$ 1. \ Pr(\delta{t} | G[t_0]) \ is \ the \ pobability \ of \ no-growth \
+                     (G[t_0] \equal \ G[t_0 + \delta{t}] \ within \ time = \delta{t}) $'
+             , r'$ 2. \ Pr(\delta{t} + \Delta{t} | G[t_0]) $'
+             , r'$ \equal \ Pr(\delta{t} | G[t_0]) * Pr(\Delta{t} | G[t_0]) $'
+             , r'$ \equal \ Pr(\delta{t} | G[t_0]) * (1 - \mu*G[t_0]*\Delta{t} - O[\Delta{t}]) $'
+             , r'$ \ \ \ (probability \ of \ one_{offspring}-growth \ is \ defined \ by \ \mu*G[t_0]*\Delta{t}) $'
+             , r'$ \ \ \ (probability \ of \ more \ than \ one_{offspring}-growth \ is \ denoted \ as \ O[\Delta{t}]) $'
+             , r'$ \Longrightarrow \frac{\partial}{\partial{t}}Pr(\delta{t} | G[t_0]) \equal \
+                     \frac{Pr(\delta{t} + \Delta{t} | G[t_0]) - Pr(\delta{t} | G[t_0])}{\Delta{t}} \approx \
+                     -\mu*G[t_0]*Pr(\delta{t} | G[t_0]) $'
+             , r'$ \Longrightarrow Pr(\delta{t} | G[t_0]) \equal \ e^{(-\mu*G[t_0]*t)} $'
+             ,r'$ \Longrightarrow \Delta{t} \equal \frac{-1}{\mu*G[t_0]} * log[Pr(\delta{t} | G[t_0])]  $'
             ]
 total_list = np.size(text_list)
 numberingFig = numberingFig + 1
-plt.figure(numberingFig, figsize=(total_list, total_list*1.5))
+plt.figure(numberingFig, figsize=(total_list, total_list*1.2))
 plt.axis('off')
 for i in range(total_list):
     plt.text(0, (total_list - float(i))/total_list
@@ -54,7 +61,7 @@ plt.savefig(save_figure, dpi = 100)
 plt.show()
 
 
-# In[55]:
+# In[93]:
 
 ''' define simple stochastic natural growth function '''
 def stochasticNaturalGrowth(total_step, minT, maxT, initial_G, inRate, noRate):
@@ -73,10 +80,13 @@ def stochasticNaturalGrowth(total_step, minT, maxT, initial_G, inRate, noRate):
     ###
     while (gT[j] < maxT):       
         # randomly choose event
-        if np.random.random() < (np.sum(eventRate_updateNum[0:1, 0]) / np.sum(eventRate_updateNum[:, 0])):
+        randomSeed = np.random.random()
+        if  randomSeed < (np.sum(eventRate_updateNum[0:1, 0]) / np.sum(eventRate_updateNum[:, 0])):
             k = 0
+            dt = (-1.0/(inRate*gG[j]))*np.log(1 - randomSeed)
         else:
             k = 1
+            dt = (-1.0/(inRate*gG[j]))*np.log(randomSeed)
         # update number of section
         gG[j] = gG[j] + eventRate_updateNum[k, 1]
         # update event_rate
@@ -85,7 +95,7 @@ def stochasticNaturalGrowth(total_step, minT, maxT, initial_G, inRate, noRate):
         # configuration table
         eventRate_updateNum = np.array([[event_in, +1]
                                       , [event_no, 0]])
-        dt = np.log(1.0/np.random.random()) / (gG[j]*inRate)
+        dt = (-1.0/(inRate*gG[j]))*np.log(randomSeed)
         # next step is based on current step
         gT[j + 1] = gT[j] + dt 
         gG[j + 1] = gG[j]
@@ -106,14 +116,14 @@ elif timeUnit == 'year':
     year = 1
     day = float(1)/365 
     
-total_N = 1000
+total_N = 10000
 initial_G = 1
 # set parameter
 inRate = float(1)/(day) # birth rate per year
 noRate = float(1)/(day) # birth rate per year
 # initial boundary condition
 minT = float(0*day)
-maxT = float(4*day)
+maxT = float(7*day)
 
 total_step = int(maxT*total_N)
 # stochastic evolution way
@@ -135,8 +145,8 @@ numberingFig = numberingFig + 1
 figure = plt.figure(numberingFig, figsize = (7, 7))
 for i in range(total_way):
     plt.plot(gTT[i], gGG[i], label = r'$ G_{:}(t) $'.format(i), drawstyle = 'steps') 
-plt.plot(gTT[0], initial_G*np.exp(inRate*gTT[0]), linewidth = 9
-         , color = 'black', alpha = 0.3, label = r'$ Natural \ Growth $') 
+#plt.plot(gTT[0], initial_G*np.exp(inRate*gTT[0]), linewidth = 9
+ #        , color = 'black', alpha = 0.3, label = r'$ Natural \ Growth $') 
 plt.grid(True)
 plt.title(r'$ Stochastic \ Natural \ Growth $', fontsize = AlvaFontSize)
 plt.xlabel(r'$ time \ ({:})$'.format(timeUnit), fontsize = AlvaFontSize)
