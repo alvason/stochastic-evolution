@@ -28,26 +28,26 @@ AlvaFigSize = (16, 8)
 numberingFig = 0
 
 
-# In[50]:
+# In[39]:
 
-# algorithm for stochastic evolution
-figure_name = '-stochastic-natural-growth'
+# non-growth probability
+figure_name = '-non-growth-probability'
 file_suffix = '.png'
 save_figure = os.path.join(dir_path, file_name + figure_name + file_suffix)
-text_list = [r'$ stochastic-natural-growth: $'
+text_list = [r'$ non-growth-probability: $'
              , r'$ 0. \ Starting \ at \ time = \ t_0, \ and \ cell \ number = \ G[t_0] $'
-             , r'$ 1. \ Pr(\delta{t} | G[t_0]) \ is \ the \ pobability \ of \ no-growth \
-                     (G[t_0] \equal \ G[t_0 + \delta{t}] \ within \ time = \delta{t}) $'
-             , r'$ 2. \ Pr(\delta{t} + \Delta{t} | G[t_0]) $'
-             , r'$ \equal \ Pr(\delta{t} | G[t_0]) * Pr(\Delta{t} | G[t_0]) $'
-             , r'$ \equal \ Pr(\delta{t} | G[t_0]) * (1 - \mu*G[t_0]*\Delta{t} - O[\Delta{t}]) $'
-             , r'$ \ \ \ (probability \ of \ one_{offspring}-growth \ is \ defined \ by \ \mu*G[t_0]*\Delta{t}) $'
-             , r'$ \ \ \ (probability \ of \ more \ than \ one_{offspring}-growth \ is \ denoted \ as \ O[\Delta{t}]) $'
-             , r'$ \Longrightarrow \frac{\partial}{\partial{t}}Pr(\delta{t} | G[t_0]) \equal \
-                     \frac{Pr(\delta{t} + \Delta{t} | G[t_0]) - Pr(\delta{t} | G[t_0])}{\Delta{t}} \approx \
-                     -\mu*G[t_0]*Pr(\delta{t} | G[t_0]) $'
-             , r'$ \Longrightarrow Pr(\delta{t} | G[t_0]) \equal \ e^{(-\mu*G[t_0]*t)} $'
-             ,r'$ \Longrightarrow \Delta{t} \equal \frac{-1}{\mu*G[t_0]} * log[Pr(\delta{t} | G[t_0])]  $'
+             , r'$ 1. \ Pr(t_{1} | G[t_{0}]) \ is \ the \ pobability \ of \ no$-$growth \
+                     (G[t_{0}] \equal \ G[t_{1}] \ within \ time$-$step \ t_{1}) $'
+             , r'$ 2. \ Pr(t_{1}+\Delta{t} | G[t_{0}]) $'
+             , r'$ \equal \ Pr(t_{1} | G[t_0]) * Pr(t_{1}+\Delta{t} | G[t_0]) $'
+             , r'$ \equal \ Pr(t_{1} | G[t_0]) * (1 - \mu*G[t_0]*\Delta{t} - O[\Delta{t}]) $'
+             , r'$ \ \ \ (probability \ of \ one$-$growth \ is \ defined \ by \ \mu*G[t_0]*\Delta{t}) $'
+             , r'$ \ \ \ (probability \ of \ more \ than \ one$-$growth \ is \ denoted \ as \ O[\Delta{t}]) $'
+             , r'$ \Longrightarrow \frac{\partial}{\partial{t}}Pr(t_{1} | G[t_0]) \equal \
+                     \frac{Pr(t_{1} + \Delta{t} | G[t_{0}]) - Pr(t_{1} | G[t_{0}])}{\Delta{t}} \approx \
+                     -\mu*G[t_0]*Pr(t_{1} | G[t_0]) $'
+             , r'$ \Longrightarrow Pr(t_{1} | G[t_{0}]) \equal \ e^{(-\mu*G[t_{0}]*t)} $'
+             ,r'$ \Longrightarrow \Delta{t} \equal \frac{-1}{\mu*G[t_{0}]} * log[Pr(t_{1} | G[t_{0}])]  $'
             ]
 total_list = np.size(text_list)
 numberingFig = numberingFig + 1
@@ -61,7 +61,58 @@ plt.savefig(save_figure, dpi = 100)
 plt.show()
 
 
-# In[93]:
+# In[50]:
+
+# growth probability
+figure_name = '-growth-probability'
+file_suffix = '.png'
+save_figure = os.path.join(dir_path, file_name + figure_name + file_suffix)
+text_list = [r'$ growth-probability: $'
+             , r'$ Pr(t_{1} + \Delta{t} | G[t_{1}+\Delta{t}]) $'
+             , r'$ \equal Pr(t_{1} | G[t_{0}]) * Pr(t_{1}+\Delta{t} | G[t_{1}+\Delta{t}]) $'
+             , r'$ \equal Pr(t_{1} | G[t_{0}]) * (\mu*G[t_{0}]*\Delta{t} + O[\Delta{t}] ) $'
+             , r'$ \equal e^{(-\mu*G[t_{0}]*t)} * (\mu*G[t_{0}]*\Delta{t} + O[\Delta{t}] ) $'
+             , r'$ \ \ \ (since \ Pr(t_{1} | G[t_{0}]) \equal \ e^{(-\mu*G[t_{0}]*t)} ) $'
+            ]
+total_list = np.size(text_list)
+numberingFig = numberingFig + 1
+plt.figure(numberingFig, figsize=(total_list, total_list*1.2))
+plt.axis('off')
+for i in range(total_list):
+    plt.text(0, (total_list - float(i))/total_list
+             , text_list[i].replace('\\\n', '')
+             , fontsize = 1.2*AlvaFontSize)
+plt.savefig(save_figure, dpi = 100)
+plt.show()
+
+
+# In[59]:
+
+# master equation
+figure_name = '-master-equation'
+file_suffix = '.png'
+save_figure = os.path.join(dir_path, file_name + figure_name + file_suffix)
+text_list = [r'$ master-equation: $'
+             , r'$ Pr(t_{0} + \Delta{t} | n) \
+                     \equal Pr(t_{0} | n) * (1 - \mu*n*\Delta{t}) + Pr(t_{0} | n-1)*\mu*(n-1)*\Delta{t} + O[\Delta{t}] $'
+             , r'$ \Longrightarrow \frac{Pr(t_{0} + \Delta{t} | n) - Pr(t_{0} | n)}{\Delta{t}} \
+                     \equal \mu*(n-1)*Pr(t_{0} | n-1) - \mu*n*Pr(t_{0} | n) $'
+             , r'$ \Longrightarrow \frac{\partial{}}{\partial{t}}Pr(t_{0} | n) \
+                     \equal \mu*(n-1)*Pr(t_{0} | n-1) - \mu*n*Pr(t_{0} | n) $'
+            ]
+total_list = np.size(text_list)
+numberingFig = numberingFig + 1
+plt.figure(numberingFig, figsize=(total_list, total_list*1.2))
+plt.axis('off')
+for i in range(total_list):
+    plt.text(0, (total_list - float(i))/total_list
+             , text_list[i].replace('\\\n', '')
+             , fontsize = 1.2*AlvaFontSize)
+plt.savefig(save_figure, dpi = 100)
+plt.show()
+
+
+# In[23]:
 
 ''' define simple stochastic natural growth function '''
 def stochasticNaturalGrowth(total_step, minT, maxT, initial_G, inRate, noRate):
