@@ -28,7 +28,7 @@ AlvaFigSize = (16, 8)
 numberingFig = 0
 
 
-# In[39]:
+# In[2]:
 
 # non-growth probability
 figure_name = '-non-growth-probability'
@@ -61,7 +61,7 @@ plt.savefig(save_figure, dpi = 100)
 plt.show()
 
 
-# In[50]:
+# In[3]:
 
 # growth probability
 figure_name = '-growth-probability'
@@ -86,7 +86,7 @@ plt.savefig(save_figure, dpi = 100)
 plt.show()
 
 
-# In[59]:
+# In[43]:
 
 # master equation
 figure_name = '-master-equation'
@@ -98,7 +98,18 @@ text_list = [r'$ master-equation: $'
              , r'$ \Longrightarrow \frac{Pr(t_{0} + \Delta{t} | n) - Pr(t_{0} | n)}{\Delta{t}} \
                      \equal \mu*(n-1)*Pr(t_{0} | n-1) - \mu*n*Pr(t_{0} | n) $'
              , r'$ \Longrightarrow \frac{\partial{}}{\partial{t}}Pr(t_{0} | n) \
-                     \equal \mu*(n-1)*Pr(t_{0} | n-1) - \mu*n*Pr(t_{0} | n) $'
+                     \equal \mu*(n-1)*Pr(t_{0} | n-1) - \mu*n*Pr(t_{0} | n) ......(Master \ Equation) $'
+             , r'$ \Longrightarrow \frac{\partial{}}{\partial{t}}Pr(t_{0} | n_{0}) \
+                     \equal - \mu*n_{0}*Pr(t_{0} | n_{0}) ......(reduced \ to \ initial \ equation \
+                     \ since \ (n_{0}-1) \ is \ non$-$existed \ at \ initial) $'
+             , r'$ \Longrightarrow Pr(t | n_{0}) \equal e^{-\mu*n_{0}*t} ......(non$-$growth$-$equation) $'
+             , r'$ ----(then \ by \ substitute \ non$-$growth$-$equation \ into \ Master \ Equation)---- $'
+             , r'$ \Longrightarrow \frac{\partial{}}{\partial{t}}Pr(t_{0} | n_{0} + 1) \
+                     \equal \mu*n_{0}*e^{-\mu*n_{0}*t_{0}} - \mu*(n_{0}+1)*Pr(t_{0} | n_{0} + 1) $'
+             , r'$ \Longrightarrow Pr(t | n_{0} + 1) \
+                     \equal e^{-\mu*(n_{0}+1)*t}*n_{0}*(1 + e^{+\mu*t}) $'
+             , r'$ (\frac{\partial{}}{\partial{t}}Pr(t) \
+                     \equal -\mu*(n_{0}+1)*e^{-\mu*(n_{0}+1)*t}*n_{0}*(1 + e^{-\mu*t}) + e^{-\mu*(n_{0}+1)*t}*n_{0}*(\mu* e^{+\mu*t})) $'
             ]
 total_list = np.size(text_list)
 numberingFig = numberingFig + 1
@@ -112,7 +123,7 @@ plt.savefig(save_figure, dpi = 100)
 plt.show()
 
 
-# In[23]:
+# In[5]:
 
 ''' define simple stochastic natural growth function '''
 def stochasticNaturalGrowth(total_step, minT, maxT, initial_G, inRate, noRate):
