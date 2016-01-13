@@ -6,7 +6,7 @@
 # 
 # ### Stochastic version for evolutionary insights
 
-# In[1]:
+# In[24]:
 
 '''
 author: Alvason Zhenhua Li
@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 import time
 import os
 dir_path = '/Users/al/Desktop/GitHub/stochastic-infectious-pulse/figure'
-file_name = 'stochastic-sir'
+file_name = 'stochastic-diffusion'
 
 import alva_machinery_probability as alva
 
@@ -31,13 +31,10 @@ numberingFig = 0
 figure_name = '-stochastic-event'
 file_suffix = '.png'
 save_figure = os.path.join(dir_path, file_name + figure_name + file_suffix)
-text_list = [r'$ Stochastic-SIR-evolution(all \ possible \ evolving \ events): $'
-              , r'$ 1. event(new \ SIR \ in)  = \mu(S+I+R) $'
-              , r'$ 2. event(old \ S \ out) = \mu S $'
-              , r'$ 3. event(old \ I \ out) = \mu I $'
-              , r'$ 4. event(old \ R \ out) = \mu R $'
-              , r'$ 5. event(SI \ infected) = \beta S(t)I(t) $' 
-              , r'$ 6. event(IR \ recovred) = \gamma I(t) $']
+text_list = [r'$ Stochastic $-$ diffusion $-$ evolution(all \ possible \ evolving \ events): $'
+              , r'$ 1. event \ (H(x, t) \ in) \equal \frac{\xi}{(\Delta{x})^2} [H(x-\Delta{x}) - H(x, t)] $'
+              , r'$ 2. event \ (H(x, t) \ out) \equal \frac{\xi}{(\Delta{x})^2} [H(x, t) - H(x+\Delta{x})] $'
+            ]
 total_list = np.size(text_list)
 numberingFig = numberingFig + 1
 plt.figure(numberingFig, figsize=(total_list*2, total_list))
@@ -49,14 +46,14 @@ for i in range(total_list):
 plt.savefig(save_figure, dpi = 100)
 plt.show()
 
-# relating to the deterministic SIR equation
-text_list = [r'$ Corresponding \ to \ deterministic-SIR-equation $'
-             , r'$ \frac{\partial S(t)}{\partial t} = \
-                   -\beta S(t)I(t) +\mu N -\mu S(t) $'
-             , r'$ \frac{\partial I(t)}{\partial t} = \
-                   +\beta S(t)I(t) - \gamma I(t) -\mu I(t) $'
-             , r'$ \frac{\partial R(t)}{\partial t} = \
-                   +\gamma I(t) - \mu R(t) $']
+# relating to the deterministic diffusion equation
+text_list = [r'$ Corresponding \ to \ deterministic $-$ diffusion $-$ equation $'
+             , r'$ \frac{\partial{}}{\partial{t}}H(x, t) \equal \
+                     \xi \frac{\partial{}^2}{\partial{x}^2}H(x, t) $'
+             , r'$ \Longrightarrow \frac{H(x, t + \Delta{t}) - H(x, t)}{\Delta{t}} \approx \
+                     \frac{\xi}{(\Delta{x})^2} [H(x-\Delta{x}, t) - H(x ,t)] \ \minus \ \
+                     \frac{\xi}{(\Delta{x})^2} [H(x, t) - H(x+\Delta{x} ,t)] $'
+            ]
 total_list = np.size(text_list)
 numberingFig = numberingFig + 1
 plt.figure(numberingFig, figsize=(total_list*2, total_list))
@@ -68,14 +65,14 @@ for i in range(total_list):
 plt.show()
 
 
-# In[2]:
+# In[25]:
 
 # algorithm for stochastic evolution
 figure_name = '-Gillespie-algorithm'
 file_suffix = '.png'
 save_figure = os.path.join(dir_path, file_name + figure_name + file_suffix)
 text_list = [r'$ Gillespie-algorithm: $'
-             , r'$ 1. \ initialize \ the \ number \ of \ each \ group: \ S(t=0), I(t=0), R(t=0) $'
+             , r'$ 1. \ initialize \ the \ number \ of \ each \ group: \ H(x=0, t=0) $'
              , r'$ 2. \ compute \ the \ probability \ of \ each \ possible \ event_i \ at \ the \ moment \ \bf{t} $'
              , r'$ 3. \ randomly \ select \ event_{next} \
                    \ according \ to \ random{[0,1)} < \frac{\sum_{k=1}^{next}event_{k}}{\sum_{i=1}^{all} event_i} $'
@@ -100,59 +97,50 @@ plt.show()
 
 # In[3]:
 
-''' define stochasticSIR function '''
-def stochasticSIR(minT, maxT, totalStep_T, initial_S, initial_I, initial_R
-                  , reprodNum, recovRate, inOutRate, infecRate):
+''' define stochasticDiffusion function '''
+def stochasticDiffusion(minX, maxX, totalStep_X, minT, maxT, totalStep_T, initial_H, movingRate):
     # intialized
+    gX = np.zeros([totalStep_X]) 
     gT = np.zeros([totalStep_T]) 
-    gS = np.zeros([totalStep_T]) 
-    gI = np.zeros([totalStep_T]) 
-    gR = np.zeros([totalStep_T]) 
+    gH = np.zeros([totalStep_X, totalStep_T]) 
+    xn = int(0)
     tn = int(0)
+    gX[xn] = minX
     gT[tn] = minT
-    gS[tn] = initial_S
-    gI[tn] = initial_I
-    gR[tn] = initial_R  
+    gH[xn, tn] = initial_H
     # all possible events
-    event_SIRin = inOutRate*(gS[tn] + gI[tn] + gR[tn])
-    event_Sout = inOutRate*gS[tn]
-    event_Iout = inOutRate*gI[tn]
-    event_Rout = inOutRate*gR[tn]
-    event_SI = infecRate*gS[tn]*gI[tn] / (gS[tn] + gI[tn] + gR[tn])
-    event_IR = recovRate*gI[tn]
+    event_Hin = movingRate*(gH[xn-1, tn] - gH[xn, tn])
+    event_Hout = movingRate*(gH[xn, tn] - gH[xn+1, tn])
     # configuration table
-    eventRate_updateNumSIR = np.array([[event_SIRin, +1, 0, 0]
-                                     , [event_Sout, -1, 0, 0]
-                                     , [event_Iout, 0, -1, 0]
-                                     , [event_Rout, 0, 0, -1]
-                                     , [event_SI, -1, +1, 0]
-                                     , [event_IR, 0, -1, +1]])
+    eventRate_updateNumH = np.array([[event_Hin, +1]
+                                   , [event_Hout, -1]
+                                    ])
     ###
     while (gT[tn] < maxT):       
         # randomly choose event
         if np.random.random() < (eventRate_updateNumSIR[0:1, 0].sum() / eventRate_updateNumSIR[:, 0].sum()):
-            en = 0
+            k = 0
         elif np.random.random() < (eventRate_updateNumSIR[0:2, 0].sum() / eventRate_updateNumSIR[:, 0].sum()):
-            en = 1
+            k = 1
         elif np.random.random() < (eventRate_updateNumSIR[0:3, 0].sum() / eventRate_updateNumSIR[:, 0].sum()):
-            en = 2
+            k = 2
         elif np.random.random() < (eventRate_updateNumSIR[0:4, 0].sum() / eventRate_updateNumSIR[:, 0].sum()):
-            en = 3
+            k = 3
         elif np.random.random() < (eventRate_updateNumSIR[0:5, 0].sum() / eventRate_updateNumSIR[:, 0].sum()):
-            en = 4
+            k = 4
         else:
-            en = 5
+            k = 5
         # update number of section
-        gS[tn] = gS[tn] + eventRate_updateNumSIR[en, 1]
-        gI[tn] = gI[tn] + eventRate_updateNumSIR[en, 2]
-        gR[tn] = gR[tn] + eventRate_updateNumSIR[en, 3]
+        gS[j] = gS[j] + eventRate_updateNumSIR[k, 1]
+        gI[j] = gI[j] + eventRate_updateNumSIR[k, 2]
+        gR[j] = gR[j] + eventRate_updateNumSIR[k, 3]
         # update event_rate
-        event_SIRin = inOutRate*(gS[tn] + gI[tn] + gR[tn])
-        event_Sout = inOutRate*gS[tn]
-        event_Iout = inOutRate*gI[tn]
-        event_Rout = inOutRate*gR[tn]
-        event_SI = infecRate*gS[tn]*gI[tn] / (gS[tn] + gI[tn] + gR[tn])
-        event_IR = recovRate*gI[tn]
+        event_SIRin = inOutRate*(gS[j] + gI[j] + gR[j])
+        event_Sout = inOutRate*gS[j]
+        event_Iout = inOutRate*gI[j]
+        event_Rout = inOutRate*gR[j]
+        event_SI = infecRate*gS[j]*gI[j] / (gS[j] + gI[j] + gR[j])
+        event_IR = recovRate*gI[j]
         eventRate_updateNumSIR = np.array([[event_SIRin, 1, 0, 0]
                                          , [event_Sout, -1, 0, 0]
                                          , [event_Iout, 0, -1, 0]
@@ -161,16 +149,16 @@ def stochasticSIR(minT, maxT, totalStep_T, initial_S, initial_I, initial_R
                                          , [event_IR, 0, -1, +1]])  
         # next step is based on current step
         dt = -np.log(np.random.random()) / eventRate_updateNumSIR[:, 0].sum()
-        gT[tn + 1] = gT[tn] + dt 
-        gS[tn + 1] = gS[tn]
-        gI[tn + 1] = gI[tn]
-        gR[tn + 1] = gR[tn]
-        tn = tn + 1
+        gT[j + 1] = gT[j] + dt 
+        gS[j + 1] = gS[j]
+        gI[j + 1] = gI[j]
+        gR[j + 1] = gR[j]
+        j = j + 1
     # set the value of remaining steps = value of the last step (for ending)
-    gT[tn:] = gT[tn]
-    gS[tn:] = gS[tn]
-    gI[tn:] = gI[tn]
-    gR[tn:] = gR[tn]
+    gT[j:] = gT[j]
+    gS[j:] = gS[j]
+    gI[j:] = gI[j]
+    gR[j:] = gR[j]
     ###
     return(gT, gS, gI, gR)
 
@@ -201,21 +189,21 @@ infecRate = reprodNum*(recovRate + inOutRate)/1 # per year, per person, per tota
 minT = float(0*day)
 maxT = float(90*day)
 
-totalStep_T = int(maxT*total_SIR)
+total_step = int(maxT*total_SIR)
 # stochastic evolution way
 total_way = int(5)
-gTT = np.zeros([total_way, totalStep_T]) 
-gSS = np.zeros([total_way, totalStep_T]) 
-gII = np.zeros([total_way, totalStep_T]) 
-gRR = np.zeros([total_way, totalStep_T]) 
+gTT = np.zeros([total_way, total_step]) 
+gSS = np.zeros([total_way, total_step]) 
+gII = np.zeros([total_way, total_step]) 
+gRR = np.zeros([total_way, total_step]) 
 
-for wn in range(total_way):
-    evolution = stochasticSIR(minT, maxT, totalStep_T, initial_S, initial_I, initial_R
+for i in range(total_way):
+    aaa = stochasticSIR(total_step, minT, maxT, initial_S, initial_I, initial_R
                         , reprodNum, recovRate, inOutRate, infecRate)
-    gTT[wn] = evolution[0]
-    gSS[wn] = evolution[1]
-    gII[wn] = evolution[2]
-    gRR[wn] = evolution[3]
+    gTT[i] = aaa[0]
+    gSS[i] = aaa[1]
+    gII[i] = aaa[2]
+    gRR[i] = aaa[3]
 
 # plotting
 figure_name = '-sir'
@@ -224,20 +212,20 @@ save_figure = os.path.join(dir_path, file_name + figure_name + file_suffix)
 
 numberingFig = numberingFig + 1
 figure = plt.figure(numberingFig, figsize = AlvaFigSize)
-for wn in range(total_way):
-    plt.plot(gTT[wn], gSS[wn], label = r'$ S_{:}(t) $'.format(wn), linewidth = (1 + wn)
-             , color = 'blue', alpha = float(0.5 + wn/total_way))
-    plt.plot(gTT[wn], gII[wn], label = r'$ I_{:}(t) $'.format(wn), linewidth = (1 + wn)
-             , color = 'red', alpha = float(0.5 + wn/total_way))
-    plt.plot(gTT[wn], gRR[wn], label = r'$ R_{:}(t) $'.format(wn), linewidth = (1 + wn)
-             , color = 'green', alpha = float(0.5 + wn/total_way))
-    plt.plot(gTT[wn], (gSS[wn] + gII[wn] + gRR[wn]), label = r'$ N_{:}(t) $'.format(wn)
-             , linewidth = (1 + wn), color = 'black', alpha = float(0.5 + wn/total_way))    
+for i in range(total_way):
+    plt.plot(gTT[i], gSS[i], label = r'$ S_{:}(t) $'.format(i), linewidth = (1 + i)
+             , color = 'blue', alpha = float(0.5 + i/total_way))
+    plt.plot(gTT[i], gII[i], label = r'$ I_{:}(t) $'.format(i), linewidth = (1 + i)
+             , color = 'red', alpha = float(0.5 + i/total_way))
+    plt.plot(gTT[i], gRR[i], label = r'$ R_{:}(t) $'.format(i), linewidth = (1 + i)
+             , color = 'green', alpha = float(0.5 + i/total_way))
+    plt.plot(gTT[i], (gSS[i] + gII[i] + gRR[i]), label = r'$ N_{:}(t) $'.format(i)
+             , linewidth = (1 + i), color = 'black', alpha = float(0.5 + i/total_way))    
 plt.grid(True)
 plt.title(r'$ Stochastic \ SIR \ (Susceptible-Infected-Recovered) $', fontsize = AlvaFontSize)
 plt.xlabel(r'$ time \ ({:})$'.format(timeUnit), fontsize = AlvaFontSize)
 plt.ylabel(r'$ Population $', fontsize = AlvaFontSize)
-plt.legend(loc = (1, 0))
+plt.legend(loc = (1,0))
 plt.text(maxT, total_SIR*6.0/6, r'$ R_0 = {:} $'.format(reprodNum), fontsize = AlvaFontSize)
 plt.text(maxT, total_SIR*5.0/6, r'$ \gamma = {:} $'.format(recovRate), fontsize = AlvaFontSize)
 plt.text(maxT, total_SIR*4.0/6, r'$ \beta = {:} $'.format(infecRate), fontsize = AlvaFontSize)
